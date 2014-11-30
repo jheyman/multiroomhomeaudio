@@ -1,0 +1,113 @@
+begin
+    prog = pylirc
+    remote = piremote
+    button = KEY_POWER
+    config = power
+end
+
+begin
+    prog = pylirc
+    remote = piremote
+    button = KEY_MUTE
+    config = mute
+end
+
+begin
+    prog = pylirc
+    remote = piremote
+    button = KEY_KPPLUS
+    config = volume_plus
+end
+
+begin
+    prog = pylirc
+    remote = piremote
+    button = KEY_KPMINUS
+    config = volume_minus
+end
+
+begin
+    prog = pylirc
+    remote = piremote
+    button = KEY_PLAY
+    config = play
+end
+
+begin
+    prog = pylirc
+    remote = piremote
+    button = KEY_NEXT
+    config = next
+end
+
+begin
+    prog = pylirc
+    remote = piremote
+    button = KEY_PREVIOUS
+    config = previous
+end
+
+begin
+    prog = pylirc
+    remote = piremote
+    button = KEY_1
+    config = button_1
+end
+
+begin
+    prog = pylirc
+    remote = piremote
+    button = KEY_2
+    config = button_2
+end
+
+begin
+    prog = pylirc
+    remote = piremote
+    button = KEY_3
+    config = button_3
+end
+
+begin
+    prog = pylirc
+    remote = piremote
+    button = KEY_4
+    config = button_4
+end
+
+begin
+    prog = pylirc
+    remote = piremote
+    button = KEY_5
+    config = button_5
+end
+
+begin
+    prog = pylirc
+    remote = piremote
+    button = KEY_6
+    config = button_6
+end
+
+begin
+    prog = pylirc
+    remote = piremote
+    button = KEY_7
+    config = button_7
+end
+
+begin
+    prog = pylirc
+    remote = piremote
+    button = KEY_8 
+    config = button_8
+end
+
+begin
+    prog = pylirc
+    remote = piremote
+    button = KEY_9 
+    config = button_9
+end
+
+
