@@ -1,12 +1,20 @@
 #!/usr/bin/python
 import pylirc, time
 import telnetlib
+import RPi.GPIO as GPIO
+import time
 
+# Configure GPIO pin used to drive the amplifier's shutdown mode
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(23, GPIO.OUT)
+GPIO.output(23, GPIO.LOW) # by default, amp is set in shutdown mode
 
 MAC_address = "80:1f:02:65:39:47"
+LMS_IPaddress = "192.168.0.13"
+
 power=0
 
-tn = telnetlib.Telnet("192.168.0.13", "9090")
+tn = telnetlib.Telnet(LMS_IPaddress, "9090")
 if(pylirc.init("pylirc", "./conf", 1)):
 
    while(True):
@@ -63,14 +71,19 @@ if(pylirc.init("pylirc", "./conf", 1)):
             if (power == 0):
                power = 1
                print "power ON"
+               # drive SHDN pin to HIGH to disable shutdown mode on amp, effectively turning it ON
+               GPIO.output(23, GPIO.HIGH)
                tn.write(MAC_address + " playlist play audio_on.wav\n")
             elif (power == 1):
                power = 0
                print "power OFF"
                tn.write(MAC_address + " playlist play audio_off.wav\n")
-          
+               # Allow for a few seconds for OFF sound to be played, then shutdown the amplifier
+               time.sleep(5)
+               # drive SHDN pin to LOW to enable shutdown mode on amp, effectively turning it OFF
+               GPIO.output(23, GPIO.LOW)
 
    # Clean up lirc
    pylirc.exit()
-
+   GPIO.cleanup()
    
