@@ -46,7 +46,9 @@ SB_SERVER_CLI_PORT="9090"
 
 # Set the soundcard
 #SL_SOUNDCARD="sysdefault:CARD=ALSA"
-SL_SOUNDCARD="front:CARD=Set,DEV=0"
+#SL_SOUNDCARD="front:CARD=Set,DEV=0"
+#SL_SOUNDCARD="front:CARD=Device,DEV=0"
+SL_SOUNDCARD="default"
 
 # Uncomment the next line (remove hash) if you want to change the mac address (-m option):
 #SL_MAC_ADDRESS="00:00:00:00:00:01"
