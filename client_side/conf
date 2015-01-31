@@ -110,4 +110,17 @@ begin
     config = button_9
 end
 
+begin
+    prog = pylirc
+    remote = piremote
+    button = KEY_START_ANNOUNCE
+    config = start_announce
+end
 
+
+begin
+    prog = pylirc
+    remote = piremote
+    button = KEY_END_ANNOUNCE
+    config = end_announce
+end

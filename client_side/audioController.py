@@ -94,26 +94,27 @@ while(True):
 	logger.info("Checking i2C communication...")
 	GPIO.output(23, GPIO.HIGH) # make sure amp is not in shutdown mode
 
-	while (i2c_OK == False):
-
-		try:
-			# Setup i2C communication
-			bus = smbus.SMBus(1)    # use bus #1
-			DEVICE_ADDRESS = 0x4b   # address of the Adafruit audio amplifier on the I2C bus
-		
-			# By default, set volume to 0
-			bus.write_byte(DEVICE_ADDRESS, 0x00)
-
-			i2c_OK = True
-			logger.info("Audio amplifier communication is OK")
-
-		except:
-			logger.info("Error checking i2C comm, retrying...")
-			time.sleep(2)
+#	while (i2c_OK == False):
+#
+#		try:
+#			# Setup i2C communication
+#			bus = smbus.SMBus(1)    # use bus #1
+#			DEVICE_ADDRESS = 0x4b   # address of the Adafruit audio amplifier on the I2C bus
+#		
+#			# By default, set volume to 0
+#			bus.write_byte(DEVICE_ADDRESS, 0x00)
+#
+#			i2c_OK = True
+#			logger.info("Audio amplifier communication is OK")
+#
+#		except:
+#			logger.info("Error checking i2C comm, retrying...")
+#			time.sleep(2)
 		
 	GPIO.output(23, GPIO.LOW) # by default, set amp back in shutdown mode
 
 	power=0
+	muted=0
 
 	# Verify that LMS server is up before continuing
 	LMS_server_OK = False
@@ -149,6 +150,7 @@ while(True):
 			elif (cmd == "mute"):
 				logger.info("MUTE")
 				tn.write(MAC_address + " mixer muting\n")
+				muted = not muted
 			elif (cmd == "volume_plus"):
 				logger.info("volume PLUS")
 				tn.write(MAC_address + " mixer volume +5\n")
@@ -209,7 +211,7 @@ while(True):
 					# drive SHDN pin to HIGH to disable shutdown mode on amp, effectively turning it ON
 					GPIO.output(23, GPIO.HIGH)
 					# Set amplifier to max 3/4 of max gain
-					bus.write_byte(DEVICE_ADDRESS, 0x30)
+#					bus.write_byte(DEVICE_ADDRESS, 0x30)
 					# Send command to LMS to play the ON jingle
 					tn.write(MAC_address + " playlist play audio_on.wav\n")
 				elif (power == 1):
@@ -220,12 +222,30 @@ while(True):
 					# Allow for a few seconds for OFF sound to be played
 					time.sleep(5)
 					# Set amplifier volume to zero
-					bus.write_byte(DEVICE_ADDRESS, 0x00)
+#					bus.write_byte(DEVICE_ADDRESS, 0x00)
 					# drive SHDN pin to LOW to enable shutdown mode on amp, effectively turning it OFF
 					GPIO.output(23, GPIO.LOW)
 
 					if (tn is not None):
 						tn.close()
+			elif (cmd == "start_announce"):
+				logger.info("START_ANNOUNCE")
+				# Gcalnotifier needs access to the audio output. If audio controller is OFF, just disable shutdown mode on amp
+				if power == 0:
+						GPIO.output(23, GPIO.HIGH)
+				## if audio controller was not already muted, mute the music
+				if muted == 0 :
+						tn.write(MAC_address + " mixer muting 1\n")
+
+			elif (cmd == "end_announce"):
+				logger.info("END_ANNOUNCE")
+				# Gcalnotifier releases access to the audio output. If audio controller is was OFF, re-enable shutdown mode on amp
+				if power == 0:
+						GPIO.output(23, GPIO.LOW)
+				## if audio controller was not muted before, unmute the music now
+				if muted == 0:
+						tn.write(MAC_address + " mixer muting 0\n")
+
 	except:
 		logger.info("*****Exception in main loop, restarting audio controller******")
 		continue
