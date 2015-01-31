@@ -94,22 +94,22 @@ while(True):
 	logger.info("Checking i2C communication...")
 	GPIO.output(23, GPIO.HIGH) # make sure amp is not in shutdown mode
 
-#	while (i2c_OK == False):
-#
-#		try:
-#			# Setup i2C communication
-#			bus = smbus.SMBus(1)    # use bus #1
-#			DEVICE_ADDRESS = 0x4b   # address of the Adafruit audio amplifier on the I2C bus
-#		
-#			# By default, set volume to 0
-#			bus.write_byte(DEVICE_ADDRESS, 0x00)
-#
-#			i2c_OK = True
-#			logger.info("Audio amplifier communication is OK")
-#
-#		except:
-#			logger.info("Error checking i2C comm, retrying...")
-#			time.sleep(2)
+	while (i2c_OK == False):
+
+		try:
+			# Setup i2C communication
+			bus = smbus.SMBus(1)    # use bus #1
+			DEVICE_ADDRESS = 0x4b   # address of the Adafruit audio amplifier on the I2C bus
+		
+			# By default, set volume to 0
+			bus.write_byte(DEVICE_ADDRESS, 0x00)
+
+			i2c_OK = True
+			logger.info("Audio amplifier communication is OK")
+
+		except:
+			logger.info("Error checking i2C comm, retrying...")
+			time.sleep(2)
 		
 	GPIO.output(23, GPIO.LOW) # by default, set amp back in shutdown mode
 
@@ -210,8 +210,8 @@ while(True):
 						tn.open(LMS_IPaddress, "9090")					
 					# drive SHDN pin to HIGH to disable shutdown mode on amp, effectively turning it ON
 					GPIO.output(23, GPIO.HIGH)
-					# Set amplifier to max 3/4 of max gain
-#					bus.write_byte(DEVICE_ADDRESS, 0x30)
+					# Set amplifier to 3/4 of max gain
+					bus.write_byte(DEVICE_ADDRESS, 0x30)
 					# Send command to LMS to play the ON jingle
 					tn.write(MAC_address + " playlist play audio_on.wav\n")
 				elif (power == 1):
@@ -222,7 +222,7 @@ while(True):
 					# Allow for a few seconds for OFF sound to be played
 					time.sleep(5)
 					# Set amplifier volume to zero
-#					bus.write_byte(DEVICE_ADDRESS, 0x00)
+					bus.write_byte(DEVICE_ADDRESS, 0x00)
 					# drive SHDN pin to LOW to enable shutdown mode on amp, effectively turning it OFF
 					GPIO.output(23, GPIO.LOW)
 
