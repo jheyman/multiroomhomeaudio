@@ -9,7 +9,7 @@ import RPi.GPIO as GPIO
 import time
 import smbus
 import os
-import sys
+import sys, traceback
 import logging
 import logging.handlers
 from ConfigParser import SafeConfigParser
@@ -74,64 +74,64 @@ logger.info("Using LMS_IPaddress %s" % LMS_IPaddress)
 tn = telnetlib.Telnet()
 
 while(True):
-	
-	logger.info("Starting audio controller...")
-
-	logger.info("Initializing remote control")
-	if(not pylirc.init("pylirc", "./conf", 1)):
-		logger.info("Error initializing pylirc")
-		break	
-
-	# Configure GPIO pin used to drive the amplifier's shutdown mode
-	logger.info("Configuring GPIO")
-	GPIO.setwarnings(False)	
-	GPIO.setmode(GPIO.BCM)
-	GPIO.setup(23, GPIO.OUT)
-	
-	# check that audio amplifier is up 
-	i2c_OK = False
-
-	logger.info("Checking i2C communication...")
-	GPIO.output(23, GPIO.HIGH) # make sure amp is not in shutdown mode
-
-	while (i2c_OK == False):
-
-		try:
-			# Setup i2C communication
-			bus = smbus.SMBus(1)    # use bus #1
-			DEVICE_ADDRESS = 0x4b   # address of the Adafruit audio amplifier on the I2C bus
-		
-			# By default, set volume to 0
-			bus.write_byte(DEVICE_ADDRESS, 0x00)
-
-			i2c_OK = True
-			logger.info("Audio amplifier communication is OK")
-
-		except:
-			logger.info("Error checking i2C comm, retrying...")
-			time.sleep(2)
-		
-	GPIO.output(23, GPIO.LOW) # by default, set amp back in shutdown mode
-
-	power=0
-	muted=0
-
-	# Verify that LMS server is up before continuing
-	LMS_server_OK = False
-
-	logger.info("Checking connection to server")
-	while (LMS_server_OK == False):
-
-		response = os.system("ping -c 1 " + LMS_IPaddress)
-
-		if response == 0:
-			logger.info("Server is up")
-			LMS_server_OK = True
-		else:
-			logger.info("Server is not up, waiting...")
-			time.sleep(2)
 
 	try:
+		logger.info("Starting audio controller...")
+
+		logger.info("Initializing remote control")
+		if(not pylirc.init("pylirc", "./conf", 1)):
+			logger.info("Error initializing pylirc")
+			break	
+
+		# Configure GPIO pin used to drive the amplifier's shutdown mode
+		logger.info("Configuring GPIO")
+		GPIO.setwarnings(False)	
+		GPIO.setmode(GPIO.BCM)
+		GPIO.setup(23, GPIO.OUT)
+		
+		# check that audio amplifier is up 
+		i2c_OK = False
+
+		logger.info("Checking i2C communication...")
+		GPIO.output(23, GPIO.HIGH) # make sure amp is not in shutdown mode
+
+		while (i2c_OK == False):
+
+			try:
+				# Setup i2C communication
+				bus = smbus.SMBus(1)    # use bus #1
+				DEVICE_ADDRESS = 0x4b   # address of the Adafruit audio amplifier on the I2C bus
+			
+				# By default, set volume to 0
+				bus.write_byte(DEVICE_ADDRESS, 0x00)
+
+				i2c_OK = True
+				logger.info("Audio amplifier communication is OK")
+
+			except:
+				logger.info("Error checking i2C comm, retrying...")
+				time.sleep(2)
+			
+		GPIO.output(23, GPIO.LOW) # by default, set amp back in shutdown mode
+
+		power=0
+		muted=0
+
+		# Verify that LMS server is up before continuing
+		LMS_server_OK = False
+
+		logger.info("Checking connection to server")
+		while (LMS_server_OK == False):
+
+			response = os.system("ping -c 1 " + LMS_IPaddress)
+
+			if response == 0:
+				logger.info("Server is up")
+				LMS_server_OK = True
+			else:
+				logger.info("Server is not up, waiting...")
+				time.sleep(2)
+
 		logger.info("Entering main command loop...")
 		while(True):
 			logger.info("Waiting for next IR command...")
@@ -205,18 +205,34 @@ while(True):
 				if (power == 0):
 					power = 1
 					logger.info("power ON")
+
+					# drive SHDN pin to HIGH to disable shutdown mode on amp, effectively turning it ON
+					GPIO.output(23, GPIO.HIGH)				
+					# Set amplifier to 3/4 of max gain
+					bus.write_byte(DEVICE_ADDRESS, 0x30)
+					# Play a locally-stored sound to notify beginning of power-up sequence
+					os.system('aplay beep.wav')
+					
+					# Systematically restart local squeezelite player, as a workaround to squeezelite not working anymore 
+					# after a a few hours (with no way to investigate why...)
+					logger.info("Restarting squeezelite server")
+					ret = os.system("sudo service squeezelite restart")
+					if response != 0:					
+						logger.info("FAILED to restart squeezelite, ret=%d", ret)
+
 					logger.info("Initializing telnet connection to server")
 					if (tn is not None):
 						tn.open(LMS_IPaddress, "9090")					
-					# drive SHDN pin to HIGH to disable shutdown mode on amp, effectively turning it ON
-					GPIO.output(23, GPIO.HIGH)
-					# Set amplifier to 3/4 of max gain
-					bus.write_byte(DEVICE_ADDRESS, 0x30)
-					# Send command to LMS to play the ON jingle
+					
+					# Some time to let local squeezelite finish its restart
+					time.sleep(1)
+					
+					# Send command to LMS to play the ON jingle to notify the successful end of power-up
 					tn.write(MAC_address + " playlist play audio_on.wav\n")
 				elif (power == 1):
 					power = 0
 					logger.info("power OFF")
+					os.system('aplay beep.wav')
 					# Send command to LMS to play the OFF jingle
 					tn.write(MAC_address + " playlist play audio_off.wav\n")
 					# Allow for a few seconds for OFF sound to be played
@@ -234,7 +250,7 @@ while(True):
 				if power == 0:
 						GPIO.output(23, GPIO.HIGH)
 				## if audio controller was not already muted, mute the music
-				if muted == 0 :
+				if power == 1 and muted == 0 :
 						tn.write(MAC_address + " mixer muting 1\n")
 
 			elif (cmd == "end_announce"):
@@ -243,11 +259,15 @@ while(True):
 				if power == 0:
 						GPIO.output(23, GPIO.LOW)
 				## if audio controller was not muted before, unmute the music now
-				if muted == 0:
+				if power == 1 and muted == 0:
 						tn.write(MAC_address + " mixer muting 0\n")
 
 	except:
-		logger.info("*****Exception in main loop, restarting audio controller******")
+		logger.info("*****Exception in main loop, restarting audio controller in 5 seconds******")
+		exc_type, exc_value, exc_traceback = sys.exc_info()
+		traceback.print_exception(exc_type, exc_value, exc_traceback,limit=2, file=sys.stdout)	
+		del exc_traceback
+		time.sleep(5.0)
 		continue
 
 
