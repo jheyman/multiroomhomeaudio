@@ -28,6 +28,10 @@ MAC_address = parser.get('config', 'mac_address')
 
 LMS_IPaddress = parser.get('config', 'lms_ip_address')
 
+# Get squeezelite player name from config file: it shall be equal to 
+# whatever player name is specified in squeezelite startup script
+PLAYER_NAME = parser.get('config', 'player_name')
+
 #################
 #  LOGGING SETUP
 #################
@@ -164,35 +168,36 @@ while(True):
 				logger.info("NEXT")
 				tn.write(MAC_address + " playlist index +1\n")
 			elif (cmd == "button_1"):
-				logger.info("PLAYLIST_1")
-				tn.write(MAC_address + " playlist play playlist_1.m3u\n")
+				logger.info("Launching playlist_"+PLAYER_NAME+"_1.m3u")
+				tn.write(MAC_address + " playlist play playlist_"+PLAYER_NAME+"_1.m3u\n")
 			elif (cmd == "button_2"):
-				logger.info("PLAYLIST_2")
-				tn.write(MAC_address + " playlist play playlist_2.m3u\n")
+				logger.info("Launching playlist_"+PLAYER_NAME+"_2.m3u")
+				tn.write(MAC_address + " playlist play playlist_"+PLAYER_NAME+"_2.m3u\n")
 			elif (cmd == "button_3"):
-				logger.info("PLAYLIST_3")
-				tn.write(MAC_address + " playlist play playlist_3.m3u\n")
+				logger.info("Launching playlist_"+PLAYER_NAME+"_3.m3u")
+				tn.write(MAC_address + " playlist play playlist_"+PLAYER_NAME+"_3.m3u\n")
 			elif (cmd == "button_4"):
-				logger.info("PLAYLIST_4")
-				tn.write(MAC_address + " playlist play playlist_4.m3u\n")
+				logger.info("Launching playlist_"+PLAYER_NAME+"_4.m3u")
+				tn.write(MAC_address + " playlist play playlist_"+PLAYER_NAME+"_4.m3u\n")
 			elif (cmd == "button_5"):
-				logger.info("PLAYLIST_5")
-				tn.write(MAC_address + " playlist play playlist_5.m3u\n")
+				logger.info("Launching playlist_"+PLAYER_NAME+"_5.m3u")
+				tn.write(MAC_address + " playlist play playlist_"+PLAYER_NAME+"_5.m3u\n")
 			elif (cmd == "button_6"):
-				logger.info("PLAYLIST_6")
-				tn.write(MAC_address + " playlist play playlist_6.m3u\n")
+				logger.info("Launching playlist_"+PLAYER_NAME+"_6.m3u")
+				tn.write(MAC_address + " playlist play playlist_"+PLAYER_NAME+"_6.m3u\n")
 			elif (cmd == "button_7"):
-				logger.info("PLAYLIST_7")
-				tn.write(MAC_address + " playlist play playlist_7.m3u\n")
+				logger.info("Launching playlist_"+PLAYER_NAME+"_7.m3u")
+				tn.write(MAC_address + " playlist play playlist_"+PLAYER_NAME+"_7.m3u\n")
 			elif (cmd == "button_8"):
-				logger.info("PLAYLIST_8")
-				tn.write(MAC_address + " playlist play playlist_8.m3u\n")
+				logger.info("Launching playlist_"+PLAYER_NAME+"_8.m3u")
+				tn.write(MAC_address + " playlist play playlist_"+PLAYER_NAME+"_8.m3u\n")
 			elif (cmd == "button_9"):
-				logger.info("PLAYLIST_9")
-				tn.write(MAC_address + " playlist play playlist_9.m3u\n")
+				logger.info("Launching playlist_"+PLAYER_NAME+"_9.m3u")
+				tn.write(MAC_address + " playlist play playlist_"+PLAYER_NAME+"_9.m3u\n")
 			elif (cmd == "power"):
 				# Now is a good time to verify that server is still up. If it's not, go back to
 				# initialization and wait for it.
+				
 				logger.info("[Power on/off] Checking connection to server")
 				response = os.system("ping -c 1 " + LMS_IPaddress)
 				if response != 0:
@@ -210,22 +215,25 @@ while(True):
 					GPIO.output(23, GPIO.HIGH)				
 					# Set amplifier to 3/4 of max gain
 					bus.write_byte(DEVICE_ADDRESS, 0x30)
+					
+					time.sleep(0.5)
+
 					# Play a locally-stored sound to notify beginning of power-up sequence
 					os.system('aplay beep.wav')
 					
 					# Systematically restart local squeezelite player, as a workaround to squeezelite not working anymore 
 					# after a a few hours (with no way to investigate why...)
-					logger.info("Restarting squeezelite server")
-					ret = os.system("sudo service squeezelite restart")
-					if response != 0:					
-						logger.info("FAILED to restart squeezelite, ret=%d", ret)
+					#logger.info("Restarting squeezelite server")
+					#ret = os.system("sudo service squeezelite restart")
+					#if response != 0:					
+					#	logger.info("FAILED to restart squeezelite, ret=%d", ret)
 
 					logger.info("Initializing telnet connection to server")
 					if (tn is not None):
 						tn.open(LMS_IPaddress, "9090")					
 					
 					# Some time to let local squeezelite finish its restart
-					time.sleep(1)
+					#time.sleep(1)
 					
 					# Send command to LMS to play the ON jingle to notify the successful end of power-up
 					tn.write(MAC_address + " playlist play audio_on.wav\n")
@@ -269,6 +277,3 @@ while(True):
 		del exc_traceback
 		time.sleep(5.0)
 		continue
-
-
-   
