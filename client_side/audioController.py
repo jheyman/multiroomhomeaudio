@@ -216,9 +216,9 @@ while(True):
 					# Set amplifier to 3/4 of max gain
 					bus.write_byte(DEVICE_ADDRESS, 0x30)
 					
-					time.sleep(0.5)
+                                        time.sleep(0.5)
 
-					# Play a locally-stored sound to notify beginning of power-up sequence
+                                        # Play a locally-stored sound to notify beginning of power-up sequence
 					os.system('aplay beep.wav')
 					
 					# Systematically restart local squeezelite player, as a workaround to squeezelite not working anymore 
@@ -277,3 +277,6 @@ while(True):
 		del exc_traceback
 		time.sleep(5.0)
 		continue
+
+
+   
