@@ -30,7 +30,7 @@ SL_MAC_ADDRESS=$(ifconfig | grep '^wlan0 ' | tr -s ' ' | cut -d ' ' -f5)
 # get hostname which can be used as hostname
 # watch out, on raspbian, you can only use letters, numbers and hyphens (minus sign, "-"). And nothing else!
 #SL_NAME=$(hostname -s)
-SL_NAME=sdbtbb_player
+
 [ -n "$SL_NAME" ] || SL_NAME=SqueezelitePlayer
 # Get squeezelite version, for logging and update procedure
 SL_VERSION=$(sudo $DAEMON -t | grep "Squeezelite v" | tr -s ' ' | cut -d ',' -f1 | cut -d ' ' -f2)
@@ -41,14 +41,14 @@ SB_SERVER_CLI_PORT="9090"
 #              CHANGE THESE VALUES IF NEEDED
 
 # the name for the squeezelite player (-n option):
-#SL_NAME="Framboos"
-#        Note: "Framboos" is Dutch for Raspberry... :-)
+SL_NAME=sdbtbb_player
 
 # Set the soundcard
 #SL_SOUNDCARD="sysdefault:CARD=ALSA"
 #SL_SOUNDCARD="front:CARD=Set,DEV=0"
 #SL_SOUNDCARD="front:CARD=Device,DEV=0"
-SL_SOUNDCARD="default"
+#SL_SOUNDCARD="default"
+SL_SOUNDCARD="plughw:CARD=Device,DEV=0"
 
 # Uncomment the next line (remove hash) if you want to change the mac address (-m option):
 #SL_MAC_ADDRESS="00:00:00:00:00:01"
