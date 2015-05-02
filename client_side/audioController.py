@@ -32,6 +32,12 @@ LMS_IPaddress = parser.get('config', 'lms_ip_address')
 # whatever player name is specified in squeezelite startup script
 PLAYER_NAME = parser.get('config', 'player_name')
 
+# Volume to be set at server level at power on
+DEFAULT_VOLUME = parser.get('config', 'default_volume')
+
+# Gain to set on external amplifier (from 0 to 63)
+AMP_GAIN = parser.getint('config', 'amp_gain')
+
 #################
 #  LOGGING SETUP
 #################
@@ -68,6 +74,7 @@ sys.stdout = MyLogger(logger, logging.INFO)
 # Replace stderr with logging to file at ERROR level
 sys.stderr = MyLogger(logger, logging.ERROR)
 
+logger.info('---------------------------------')
 logger.info('Starting Audio controller service')
 logger.info('Using MAC_address %s' % MAC_address)
 logger.info("Using LMS_IPaddress %s" % LMS_IPaddress)
@@ -146,6 +153,7 @@ while(True):
 				repeat = s[0]["repeat"]
 				logger.info("Repeat: %s",repeat)
 			else:
+				logger.info("warning: empty code")
 				continue
 
 			if cmd == "play":
@@ -214,11 +222,10 @@ while(True):
 					# drive SHDN pin to HIGH to disable shutdown mode on amp, effectively turning it ON
 					GPIO.output(23, GPIO.HIGH)				
 					# Set amplifier to 3/4 of max gain
-					bus.write_byte(DEVICE_ADDRESS, 0x30)
-					
-                                        time.sleep(0.5)
+					bus.write_byte(DEVICE_ADDRESS, AMP_GAIN)
+					time.sleep(0.5)
 
-                                        # Play a locally-stored sound to notify beginning of power-up sequence
+					# Play a locally-stored sound to notify beginning of power-up sequence
 					os.system('aplay beep.wav')
 					
 					# Systematically restart local squeezelite player, as a workaround to squeezelite not working anymore 
@@ -234,7 +241,11 @@ while(True):
 					
 					# Some time to let local squeezelite finish its restart
 					#time.sleep(1)
-					
+					tn.write(MAC_address + " power 1\n")				
+
+					# Set default volume at server level
+					tn.write(MAC_address + " mixer volume "+DEFAULT_VOLUME+"\n")	
+
 					# Send command to LMS to play the ON jingle to notify the successful end of power-up
 					tn.write(MAC_address + " playlist play audio_on.wav\n")
 				elif (power == 1):
@@ -249,6 +260,8 @@ while(True):
 					bus.write_byte(DEVICE_ADDRESS, 0x00)
 					# drive SHDN pin to LOW to enable shutdown mode on amp, effectively turning it OFF
 					GPIO.output(23, GPIO.LOW)
+
+					tn.write(MAC_address + " power 0\n")
 
 					if (tn is not None):
 						tn.close()
@@ -269,7 +282,8 @@ while(True):
 				## if audio controller was not muted before, unmute the music now
 				if power == 1 and muted == 0:
 						tn.write(MAC_address + " mixer muting 0\n")
-
+			else:
+				logger.info("Unknown command: "+cmd)
 	except:
 		logger.info("*****Exception in main loop, restarting audio controller in 5 seconds******")
 		exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -279,6 +293,3 @@ while(True):
 		GPIO.cleanup()
 		time.sleep(5.0)
 		continue
-
-
-   
