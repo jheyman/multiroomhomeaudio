@@ -84,6 +84,12 @@ logger.info("Using LMS_IPaddress %s" % LMS_IPaddress)
 
 tn = telnetlib.Telnet()
 
+def executedRemoteCommand(command):
+	logger.info("Executing remote command: " + command.strip('\n'))
+	tn.open(LMS_IPaddress, "9090")
+	tn.write(MAC_address + command)	
+	tn.close()
+
 while(True):
 
 	try:
@@ -158,50 +164,50 @@ while(True):
 
 			if cmd == "play":
 				logger.info("PLAY/PAUSE")
-				tn.write(MAC_address + " pause\n")
+				executedRemoteCommand(" pause\n")
 			elif (cmd == "mute"):
 				logger.info("MUTE")
-				tn.write(MAC_address + " mixer muting\n")
+				executedRemoteCommand(" mixer muting\n")
 				muted = not muted
 			elif (cmd == "volume_plus"):
 				logger.info("volume PLUS")
-				tn.write(MAC_address + " mixer volume +5\n")
+				executedRemoteCommand(" mixer volume +5\n")
 			elif (cmd == "volume_minus"):
 				logger.info("volume_minus")
-				tn.write(MAC_address + " mixer volume -5\n")
+				executedRemoteCommand(" mixer volume -5\n")
 			elif (cmd == "previous"):
 				logger.info("PREVIOUS")
-				tn.write(MAC_address + " playlist index -1\n")
+				executedRemoteCommand(" playlist index -1\n")
 			elif (cmd == "next"):
 				logger.info("NEXT")
-				tn.write(MAC_address + " playlist index +1\n")
+				executedRemoteCommand(" playlist index +1\n")
 			elif (cmd == "button_1"):
 				logger.info("Launching playlist_"+PLAYER_NAME+"_1.m3u")
-				tn.write(MAC_address + " playlist play playlist_"+PLAYER_NAME+"_1.m3u\n")
+				executedRemoteCommand(" playlist play playlist_"+PLAYER_NAME+"_1.m3u\n")
 			elif (cmd == "button_2"):
 				logger.info("Launching playlist_"+PLAYER_NAME+"_2.m3u")
-				tn.write(MAC_address + " playlist play playlist_"+PLAYER_NAME+"_2.m3u\n")
+				executedRemoteCommand(" playlist play playlist_"+PLAYER_NAME+"_2.m3u\n")
 			elif (cmd == "button_3"):
 				logger.info("Launching playlist_"+PLAYER_NAME+"_3.m3u")
-				tn.write(MAC_address + " playlist play playlist_"+PLAYER_NAME+"_3.m3u\n")
+				executedRemoteCommand(" playlist play playlist_"+PLAYER_NAME+"_3.m3u\n")
 			elif (cmd == "button_4"):
 				logger.info("Launching playlist_"+PLAYER_NAME+"_4.m3u")
-				tn.write(MAC_address + " playlist play playlist_"+PLAYER_NAME+"_4.m3u\n")
+				executedRemoteCommand(" playlist play playlist_"+PLAYER_NAME+"_4.m3u\n")
 			elif (cmd == "button_5"):
 				logger.info("Launching playlist_"+PLAYER_NAME+"_5.m3u")
-				tn.write(MAC_address + " playlist play playlist_"+PLAYER_NAME+"_5.m3u\n")
+				executedRemoteCommand(" playlist play playlist_"+PLAYER_NAME+"_5.m3u\n")
 			elif (cmd == "button_6"):
 				logger.info("Launching playlist_"+PLAYER_NAME+"_6.m3u")
-				tn.write(MAC_address + " playlist play playlist_"+PLAYER_NAME+"_6.m3u\n")
+				executedRemoteCommand(" playlist play playlist_"+PLAYER_NAME+"_6.m3u\n")
 			elif (cmd == "button_7"):
 				logger.info("Launching playlist_"+PLAYER_NAME+"_7.m3u")
-				tn.write(MAC_address + " playlist play playlist_"+PLAYER_NAME+"_7.m3u\n")
+				executedRemoteCommand(" playlist play playlist_"+PLAYER_NAME+"_7.m3u\n")
 			elif (cmd == "button_8"):
 				logger.info("Launching playlist_"+PLAYER_NAME+"_8.m3u")
-				tn.write(MAC_address + " playlist play playlist_"+PLAYER_NAME+"_8.m3u\n")
+				executedRemoteCommand(" playlist play playlist_"+PLAYER_NAME+"_8.m3u\n")
 			elif (cmd == "button_9"):
 				logger.info("Launching playlist_"+PLAYER_NAME+"_9.m3u")
-				tn.write(MAC_address + " playlist play playlist_"+PLAYER_NAME+"_9.m3u\n")
+				executedRemoteCommand(" playlist play playlist_"+PLAYER_NAME+"_9.m3u\n")
 			elif (cmd == "power"):
 				# Now is a good time to verify that server is still up. If it's not, go back to
 				# initialization and wait for it.
@@ -234,26 +240,22 @@ while(True):
 					#ret = os.system("sudo service squeezelite restart")
 					#if response != 0:					
 					#	logger.info("FAILED to restart squeezelite, ret=%d", ret)
-
-					logger.info("Initializing telnet connection to server")
-					if (tn is not None):
-						tn.open(LMS_IPaddress, "9090")					
-					
+	
 					# Some time to let local squeezelite finish its restart
 					#time.sleep(1)
-					tn.write(MAC_address + " power 1\n")				
+					executedRemoteCommand(" power 1\n")				
 
 					# Set default volume at server level
-					tn.write(MAC_address + " mixer volume "+DEFAULT_VOLUME+"\n")	
+					executedRemoteCommand(" mixer volume "+DEFAULT_VOLUME+"\n")	
 
 					# Send command to LMS to play the ON jingle to notify the successful end of power-up
-					tn.write(MAC_address + " playlist play audio_on.wav\n")
+					executedRemoteCommand(" playlist play audio_on.wav\n")
 				elif (power == 1):
 					power = 0
 					logger.info("power OFF")
 					os.system('aplay beep.wav')
 					# Send command to LMS to play the OFF jingle
-					tn.write(MAC_address + " playlist play audio_off.wav\n")
+					executedRemoteCommand(" playlist play audio_off.wav\n")
 					# Allow for a few seconds for OFF sound to be played
 					time.sleep(5)
 					# Set amplifier volume to zero
@@ -261,10 +263,8 @@ while(True):
 					# drive SHDN pin to LOW to enable shutdown mode on amp, effectively turning it OFF
 					GPIO.output(23, GPIO.LOW)
 
-					tn.write(MAC_address + " power 0\n")
+					executedRemoteCommand(" power 0\n")
 
-					if (tn is not None):
-						tn.close()
 			elif (cmd == "start_announce"):
 				logger.info("START_ANNOUNCE")
 				# Gcalnotifier needs access to the audio output. If audio controller is OFF, just disable shutdown mode on amp
@@ -272,7 +272,7 @@ while(True):
 						GPIO.output(23, GPIO.HIGH)
 				## if audio controller was not already muted, mute the music
 				if power == 1 and muted == 0 :
-						tn.write(MAC_address + " mixer muting 1\n")
+						executedRemoteCommand(" mixer muting 1\n")
 
 			elif (cmd == "end_announce"):
 				logger.info("END_ANNOUNCE")
@@ -281,7 +281,7 @@ while(True):
 						GPIO.output(23, GPIO.LOW)
 				## if audio controller was not muted before, unmute the music now
 				if power == 1 and muted == 0:
-						tn.write(MAC_address + " mixer muting 0\n")
+						executedRemoteCommand(" mixer muting 0\n")
 			else:
 				logger.info("Unknown command: "+cmd)
 	except:
