@@ -117,10 +117,23 @@ begin
     config = start_announce
 end
 
-
 begin
     prog = pylirc
     remote = piremote
     button = KEY_END_ANNOUNCE
     config = end_announce
+end
+
+begin
+    prog = pylirc
+    remote = piremote
+    button = REMOTE_POWER_ON
+    config = power_on
+end
+
+begin
+    prog = pylirc
+    remote = piremote
+    button = REMOTE_POWER_OFF
+    config = power_off
 end

@@ -151,6 +151,7 @@ while(True):
 
 		logger.info("Entering main command loop...")
 		while(True):
+
 			logger.info("Waiting for next IR command...")
 			s = pylirc.nextcode(1)
 			if s is not None:
@@ -208,7 +209,7 @@ while(True):
 			elif (cmd == "button_9"):
 				logger.info("Launching playlist_"+PLAYER_NAME+"_9.m3u")
 				executedRemoteCommand(" playlist play playlist_"+PLAYER_NAME+"_9.m3u\n")
-			elif (cmd == "power"):
+			elif (cmd == "power" or cmd == "power_on" or cmd=="power_off"):
 				# Now is a good time to verify that server is still up. If it's not, go back to
 				# initialization and wait for it.
 				
@@ -221,7 +222,7 @@ while(True):
 					break
 
 				# Handle power on/off command
-				if (power == 0):
+				if (power == 0 or cmd=="power_on"):
 					power = 1
 					logger.info("power ON")
 
@@ -247,24 +248,43 @@ while(True):
 
 					# Set default volume at server level
 					executedRemoteCommand(" mixer volume "+DEFAULT_VOLUME+"\n")	
+					
+					# before loading the "on" sound, backup current playlist
+					executedRemoteCommand(" playlist save tmpplaylist\n")
 
 					# Send command to LMS to play the ON jingle to notify the successful end of power-up
 					executedRemoteCommand(" playlist play audio_on.wav\n")
-				elif (power == 1):
+
+					# Allow for a few seconds for ON sound to be played
+					time.sleep(5)
+
+					# Restore backuped playlist
+					executedRemoteCommand(" playlist resume tmpplaylist noplay:1 wipePlaylist:1\n")
+				elif (power == 1 or cmd=="power_off"):
 					power = 0
 					logger.info("power OFF")
 					os.system('aplay beep.wav')
+
+					# before loading the "off" sound, backup current playlist
+					executedRemoteCommand(" playlist save tmpplaylist\n")
+
 					# Send command to LMS to play the OFF jingle
 					executedRemoteCommand(" playlist play audio_off.wav\n")
+
 					# Allow for a few seconds for OFF sound to be played
 					time.sleep(5)
+
+                                        #  Restore backuped playlist
+                                        executedRemoteCommand(" playlist resume tmpplaylist noplay:1 wipePlaylist:1\n")
+
 					# Set amplifier volume to zero
 					bus.write_byte(DEVICE_ADDRESS, 0x00)
+
 					# drive SHDN pin to LOW to enable shutdown mode on amp, effectively turning it OFF
 					GPIO.output(23, GPIO.LOW)
 
+					# send off command to LMS server
 					executedRemoteCommand(" power 0\n")
-
 			elif (cmd == "start_announce"):
 				logger.info("START_ANNOUNCE")
 				# Gcalnotifier needs access to the audio output. If audio controller is OFF, just disable shutdown mode on amp
